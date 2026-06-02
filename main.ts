@@ -19,6 +19,16 @@ export default class DebatePartnerPlugin extends Plugin {
             await this.loadSettings();
 
 
+        const ribbonIconEl = this.addRibbonIcon('swords', 'Debate Partner',(evt: MouseEvent) => {
+         console.log("ribbon clicked, but need editor selection for thesis_junk");
+            });
+         ribbonIconEl.addClass('debate-partner-ribbon-class');
+
+
+          const statusBarItemEl = this.addStatusBarItem();
+            statusBarItemEl.setText('Debate Partner: Ready');
+
+
         }
 
         onunload() {
