@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Plugin, Notice  } from "obsidian";
 
 interface DebatePartnerSettings {
     ollmaUrl: string;
@@ -53,6 +53,11 @@ export default class DebatePartnerPlugin extends Plugin {
         }
 
         async handleChallenge(thesis_junk: string) {
-         console.log("handling debate challenge for:", thesis_junk);
+         if (!thesis_junk || thesis_junk.trim() === "") {
+            new Notice("No thesis selected! Highlight some text first.");
+            return;
+         }
+         new Notice(`Challenging "${thesis_junk.substring(0, 30)}..."`);
+         console.log("editor api is grabbinng the highlighted text:", thesis_junk);
         }
     }
