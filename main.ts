@@ -28,6 +28,15 @@ export default class DebatePartnerPlugin extends Plugin {
           const statusBarItemEl = this.addStatusBarItem();
             statusBarItemEl.setText('Debate Partner: Ready');
 
+               this.addCommand({
+                     id: "challenge-my-thinking",
+                     name: "Challenge My Thinking",
+                    editorCallback: async (editor, view) => {
+                            const selection = editor.getSelection();
+                            await this.handleChallenge(selection);
+                    }
+                });
+
 
         }
 
@@ -42,4 +51,8 @@ export default class DebatePartnerPlugin extends Plugin {
         async saveSettings() {
             await this.saveData(this.settings);
         }
-}
+
+        async handleChallenge(thesis_junk: string) {
+         console.log("handling debate challenge for:", thesis_junk);
+        }
+    }
