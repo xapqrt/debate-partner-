@@ -36,8 +36,9 @@ export class TfidEngine {
 
 
     public async crawlVault(): Promise<TFile[]> {
-
-        return [];
+        const files = this.app.vault.getFiles();
+        console.log("vault files scanned:", files.length);
+        return files;
     }
 
 
