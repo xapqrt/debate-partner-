@@ -14,8 +14,16 @@ export class TfidEngine {
 
 
     public tokenize(text: string): string[] {
+       if(!text) return [];
+      
 
-        return [];
+     const clean = text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'\n\r]/g, " ");
+       const words = clean.split(/\s+/);
+
+
+    const stopwords = new Set(["the", "a", "and", "is", "in", "to", "of", "that", "it", "for", "on", "with", "as", "this", "but", "by", "are"]);
+
+      return words.filter(w => w.length > 1 && !stopwords.has(w));
     }
 
 
