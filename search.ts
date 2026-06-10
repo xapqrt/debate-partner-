@@ -26,15 +26,31 @@ export class TfidEngine {
       return words.filter(w => w.length > 1 && !stopwords.has(w));
     }
 
+  
+    private computeTf(tokens: string[]): Map<string, number> {
+    const tfMap = new Map<string, number>();
+      if(tokens.length === 0) return tfMap;
+
+    for (const token of tokens) {
+        tfMap.set(token, (tfMap.get(token) || 0) + 1);
+    }
+
+    for (const [token, count] of tfMap.entries()) {
+        tfMap.set(token, count / tokens.length);
+    }
+
+    return tfMap;
+    }
 
 
 
-
-
-
-
-
-
+   
+   
+   
+   
+   
+   
+   
     public async crawlVault(): Promise<TFile[]> {
         const files = this.app.vault.getFiles();
         console.log("vault files scanned:", files.length);
