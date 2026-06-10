@@ -43,7 +43,25 @@ export class TfidEngine {
     }
 
 
-
+private computeIdf(allDocsTokens: string[][], terms: Set<string>): Map<string, number> {
+   const idfMap = new Map<string, number>();
+   const numDocs = allDocsTokens.length;
+   
+   for (const term of terms) {
+      let docsWithTerm = 0;
+       for (const tokens of allDocsTokens) {
+              if (tokens.includes(term)) {
+                docsWithTerm++;
+              }
+            }
+   
+        idfMap.set(term, Math.log((numDocs + 1) / (docsWithTerm + 1)) + 1);
+        }
+   
+    return idfMap;
+    }
+   
+   
    
    
    
