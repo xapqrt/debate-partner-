@@ -131,7 +131,101 @@ export class TfidEngine {
         return results.sort((a, b) => b.score - a.score).slice(0, count);
     }
 
-    public async findContradictions(thesis: string, count = 5): Promise<ContradictionResult[]> {
-        return [];
+    public async findContradictions(
+        thesis: string,
+        count = 5
+    ): Promise<ContradictionResult[]> {
+        console.log("hunting for contradictions to:", thesis);
+
+        const thesisTokens = this.tokenize(thesis);
+        if (thesisTokens.length === 0) return [];
+
+        const files = await this.crawlVault();
+        const fileContents = new Map<TFile, string>();
+        const allDocsTokens: string[][] = [];
+        const docFiles: TFile[] = [];
+
+        const readResults = await Promise.all(
+            files.map(async (file) => {
+                try {
+                    const content = await this.app.vault.cachedRead(file);
+                    return { file, content, tokens: this.tokenize(content) };
+                } catch (e) {
+                    return null;
+                }
+            })
+        );
+
+        for (const res of readResults) {
+            if (res) {
+                allDocsTokens.push(res.tokens);
+                docFiles.push(res.file);
+                fileContents.set(res.file, res.content);
+            }
+        }
+
+        const queryTerms = new Set(thesisTokens);
+        const idfs = this.computeIdf(allDocsTokens, queryTerms);
+
+        const contradictionIndicators = new Set([
+            "however", "although", "but", "yet", "nevertheless", "nonetheless",
+            "conversely", "contrary", "opposite", "versus", "against",
+            "refute", "rebuttal", "counter", "challenge", "disagree",
+            "dispute", "deny", "reject", "oppose", "unlike", "rather",
+            "instead", "alternative", "false", "incorrect", "wrong"
+        ]);
+
+        const results: ContradictionResult[] = [];
+
+        for (let i = 0; i < allDocsTokens.length; i++) {
+            const tokens = allDocsTokens[i];
+            const file = docFiles[i];
+            const content = fileContents.get(file) || "";
+            const tfs = this.computeTf(tokens);
+
+            let relevanceScore = 0;
+            for (const term of thesisTokens) {
+                const tf = tfs.get(term) || 0;
+                const idf = idfs.get(term) || 0;
+                relevanceScore += tf * idf;
+            }
+
+            if (relevanceScore <= 0) continue;
+
+            let overlapScore = 0;
+            let contradictionScore = 0;
+
+            for (const token of tokens) {
+                if (contradictionIndicators.has(token)) {
+                    contradictionScore += 1;
+                }
+            }
+            contradictionScore = contradictionScore / (tokens.length || 1);
+
+            const sharedTerms = new Set<string>();
+            for (const term of tokens) {
+                if (queryTerms.has(term)) {
+                    sharedTerms.add(term);
+                }
+            }
+            overlapScore = sharedTerms.size / queryTerms.size;
+
+            results.push({
+                file,
+                relevanceScore,
+                contradictionScore,
+                overlapScore,
+                linkedMentions: [],
+                excerpt: ""
+            });
+        }
+
+        return results
+            .sort((a, b) => {
+                const scoreA = a.relevanceScore + a.contradictionScore * 3;
+                const scoreB = b.relevanceScore + b.contradictionScore * 3;
+                return scoreB - scoreA;
+            })
+            .slice(0, count);
     }
 }
