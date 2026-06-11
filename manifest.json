@@ -1,9 +1,9 @@
 {
     "id": "debate-partner",
     "name": "Debate Partner",
-    "version": "1.0.0", 
+    "version": "1.0.0",
     "miniAppVersion": "0.15.0",
-    "description": "An adversarial reasoning engine using your local vault notes and Ollama.",
-     "author": "xapqrt",
-     "isDesktopOnly": true,
+    "description": "An adversarial reasoning engine that searches your vault for contradictions and complicating perspectives.",
+    "author": "xapqrt",
+    "isDesktopOnly": true
 }
