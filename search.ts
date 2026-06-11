@@ -227,13 +227,31 @@ export class TfidEngine {
                 }
             }
 
+            let excerpt = "";
+            const sentences = content.split(/(?<=[.!?])\s+/);
+            for (const sentence of sentences) {
+                const sentTokens = this.tokenize(sentence);
+                let sharedCount = 0;
+                for (const t of sentTokens) {
+                    if (queryTerms.has(t)) sharedCount++;
+                }
+                if (sharedCount >= 1) {
+                    excerpt = sentence.substring(0, 200);
+                    if (sentence.length > 200) excerpt += "...";
+                    break;
+                }
+            }
+            if (!excerpt && content.length > 0) {
+                excerpt = content.substring(0, 200) + "...";
+            }
+
             results.push({
                 file,
                 relevanceScore,
                 contradictionScore,
                 overlapScore,
                 linkedMentions,
-                excerpt: ""
+                excerpt
             });
         }
 
