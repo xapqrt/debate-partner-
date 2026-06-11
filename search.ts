@@ -210,12 +210,29 @@ export class TfidEngine {
             }
             overlapScore = sharedTerms.size / queryTerms.size;
 
+            const linkRegex = /\[\[([^\]|]+)\]\]/g;
+            const linkedMentions: string[] = [];
+            let match;
+            while ((match = linkRegex.exec(content)) !== null) {
+                linkedMentions.push(match[1]);
+            }
+
+            const backlinks = this.app.metadataCache.getBacklinksForFile(file);
+            if (backlinks) {
+                for (const path of backlinks.keys()) {
+                    const fileName = path.replace(/\.md$/, "");
+                    if (!linkedMentions.includes(fileName)) {
+                        linkedMentions.push(fileName);
+                    }
+                }
+            }
+
             results.push({
                 file,
                 relevanceScore,
                 contradictionScore,
                 overlapScore,
-                linkedMentions: [],
+                linkedMentions,
                 excerpt: ""
             });
         }
