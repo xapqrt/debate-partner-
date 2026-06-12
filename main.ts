@@ -1,4 +1,4 @@
-import { Plugin, Notice, PluginSettingTab, Setting, App, TFile } from "obsidian";
+import { Plugin, Notice, PluginSettingTab, Setting, App } from "obsidian";
 import { TfidEngine, ContradictionResult } from "./search";
 import { DebatePartnerView, DEBATE_PARTNER_VIEW_TYPE } from "./view";
 
