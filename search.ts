@@ -172,7 +172,8 @@ export class TfidEngine {
             "conversely", "contrary", "opposite", "versus", "against",
             "refute", "rebuttal", "counter", "challenge", "disagree",
             "dispute", "deny", "reject", "oppose", "unlike", "rather",
-            "instead", "alternative", "false", "incorrect", "wrong"
+            "instead", "alternative", "false", "incorrect", "wrong",
+            "problematic", "dubious", "questionable", "suspicious"
         ]);
 
         const results: ContradictionResult[] = [];
