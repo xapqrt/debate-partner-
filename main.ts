@@ -14,7 +14,7 @@ export default class DebatePartnerPlugin extends Plugin {
     settings: DebatePartnerSettings = DEFAULT_SETTINGS;
 
     async onload() {
-        console.log("loading debate partner... ready to start fights with your own notes");
+        console.log("loading debate partner... time to argue with your past self");
 
         await this.loadSettings();
 
