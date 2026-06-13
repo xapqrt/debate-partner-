@@ -57,7 +57,7 @@ export class DebatePartnerView extends ItemView {
 
         if (this.contradictions.length === 0) {
             baseDiv.createEl("p", {
-                text: "No contradictions found. Either your thesis is flawless (unlikely) or your vault is too agreeable.",
+                text: "No contradictions found. Either your thesis is bulletproof (unlikely) or your vault needs more spicy takes.",
                 cls: "debate-empty-state"
             });
             return;
