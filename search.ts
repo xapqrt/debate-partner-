@@ -73,6 +73,9 @@ export class TfidEngine {
     public async crawlVault(): Promise<TFile[]> {
         const files = this.app.vault.getFiles().filter(f => f.extension === "md");
         console.log("vault files scanned:", files.length);
+        if (files.length === 0) {
+            console.warn("no markdown files found in vault. nothing to argue with.");
+        }
         return files;
     }
 
