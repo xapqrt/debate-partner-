@@ -136,7 +136,8 @@ export class TfidEngine {
 
     public async findContradictions(
         thesis: string,
-        count = 5
+        count = 5,
+        excludeFile?: TFile | null
     ): Promise<ContradictionResult[]> {
         console.log("hunting for contradictions to:", thesis);
 
@@ -180,10 +181,14 @@ export class TfidEngine {
         ]);
 
         const results: ContradictionResult[] = [];
+        const skippedFiles: { file: TFile; tokens: string[]; content: string }[] = [];
 
         for (let i = 0; i < allDocsTokens.length; i++) {
             const tokens = allDocsTokens[i];
             const file = docFiles[i];
+            
+            if (excludeFile && file.path === excludeFile.path) continue;
+
             const content = fileContents.get(file) || "";
             const tfs = this.computeTf(tokens);
 
@@ -194,7 +199,10 @@ export class TfidEngine {
                 relevanceScore += tf * idf;
             }
 
-            if (relevanceScore <= 0) continue;
+            if (relevanceScore <= 0) {
+                skippedFiles.push({ file, tokens, content });
+                continue;
+            }
 
             let overlapScore = 0;
             let contradictionScore = 0;
@@ -221,7 +229,7 @@ export class TfidEngine {
                 linkedMentions.push(match[1]);
             }
 
-            const backlinks = this.app.metadataCache.getBacklinksForFile(file);
+            const backlinks = (this.app.metadataCache as any).getBacklinksForFile(file);
             if (backlinks) {
                 for (const path of backlinks.keys()) {
                     const fileName = path.replace(/\.md$/, "");
@@ -259,12 +267,60 @@ export class TfidEngine {
             });
         }
 
-        return results
-            .sort((a, b) => {
-                const scoreA = a.relevanceScore + a.contradictionScore * 3;
-                const scoreB = b.relevanceScore + b.contradictionScore * 3;
-                return scoreB - scoreA;
-            })
-            .slice(0, count);
+        results.sort((a, b) => {
+            const scoreA = a.relevanceScore + a.contradictionScore * 3;
+            const scoreB = b.relevanceScore + b.contradictionScore * 3;
+            return scoreB - scoreA;
+        });
+
+        if (results.length < 3 && skippedFiles.length > 0) {
+            const scoredSkipped = skippedFiles.map(item => {
+                let contradictionScore = 0;
+                for (const token of item.tokens) {
+                    if (contradictionIndicators.has(token)) {
+                        contradictionScore += 1;
+                    }
+                }
+                contradictionScore = contradictionScore / (item.tokens.length || 1);
+
+                const linkRegex = /\[\[([^\]|]+)\]\]/g;
+                const linkedMentions: string[] = [];
+                let match;
+                while ((match = linkRegex.exec(item.content)) !== null) {
+                    linkedMentions.push(match[1]);
+                }
+
+                const backlinks = (this.app.metadataCache as any).getBacklinksForFile(item.file);
+                if (backlinks) {
+                    for (const path of backlinks.keys()) {
+                        const fileName = path.replace(/\.md$/, "");
+                        if (!linkedMentions.includes(fileName)) {
+                            linkedMentions.push(fileName);
+                        }
+                    }
+                }
+
+                let excerpt = item.content.substring(0, 200);
+                if (item.content.length > 200) excerpt += "...";
+
+                return {
+                    file: item.file,
+                    relevanceScore: 0.001,
+                    contradictionScore,
+                    overlapScore: 0,
+                    linkedMentions,
+                    excerpt
+                };
+            });
+
+            scoredSkipped.sort((a, b) => b.contradictionScore - a.contradictionScore);
+
+            for (const item of scoredSkipped) {
+                results.push(item);
+                if (results.length >= 3) break;
+            }
+        }
+
+        return results.slice(0, count);
     }
 }

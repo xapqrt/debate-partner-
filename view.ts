@@ -39,14 +39,15 @@ export class DebatePartnerView extends ItemView {
         container.empty();
 
         const baseDiv = container.createEl("div", { cls: "debate-partner-container" });
-        baseDiv.createEl("h4", { text: "Thesis Under Debate" });
+        baseDiv.createEl("h4", { text: "Thesis Under Fire" });
 
         if (!this.thesis) {
-            baseDiv.createEl("p", { text: "No thesis selected. Highlight text and trigger 'Challenge My Thinking'." });
+            baseDiv.createEl("p", { text: "No thesis selected. Highlight text or place cursor on a paragraph." });
             return;
         }
 
-        baseDiv.createEl("blockquote", { text: this.thesis });
+        const thesisCard = baseDiv.createEl("div", { cls: "debate-thesis-card" });
+        thesisCard.createEl("blockquote", { text: this.thesis });
 
         if (this.isLoading) {
             const loadingDiv = baseDiv.createEl("div", { cls: "debate-loading-container" });
@@ -72,16 +73,17 @@ export class DebatePartnerView extends ItemView {
 
             const headerDiv = itemDiv.createEl("div", { cls: "debate-arguments-header" });
 
+            const badgeGroup = headerDiv.createEl("div", { cls: "debate-badge-group" });
             const severity = this.getSeverityLabel(contradiction.contradictionScore);
-            headerDiv.createEl("span", { cls: `debate-indicator debate-indicator-${severity.toLowerCase()}` });
-            headerDiv.createEl("span", {
+            badgeGroup.createEl("span", { cls: `debate-indicator debate-indicator-${severity.toLowerCase()}` });
+            badgeGroup.createEl("span", {
                 text: severity.toUpperCase(),
                 cls: `debate-severity debate-severity-${severity.toLowerCase()}`
             });
 
             const titleEl = headerDiv.createEl("a", {
                 text: contradiction.file.basename,
-                cls: "internal-link debate-note-title"
+                cls: "internal-link debate-note-link"
             });
             titleEl.addEventListener("click", async (e) => {
                 e.preventDefault();
@@ -113,7 +115,7 @@ export class DebatePartnerView extends ItemView {
                 const linksDiv = itemDiv.createEl("div", { cls: "debate-pills-container" });
                 for (const mention of contradiction.linkedMentions.slice(0, 5)) {
                     const pillEl = linksDiv.createEl("a", {
-                        text: `🔗 ${mention}`,
+                        text: mention,
                         cls: "debate-pill-tag internal-link"
                     });
                     pillEl.addEventListener("click", async (e) => {

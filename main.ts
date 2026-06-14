@@ -1,4 +1,4 @@
-import { Plugin, Notice, PluginSettingTab, Setting, App } from "obsidian";
+import { Plugin, Notice, PluginSettingTab, Setting, App, MarkdownView } from "obsidian";
 import { TfidEngine, ContradictionResult } from "./search";
 import { DebatePartnerView, DEBATE_PARTNER_VIEW_TYPE } from "./view";
 
@@ -24,6 +24,15 @@ export default class DebatePartnerPlugin extends Plugin {
         );
 
         const ribbonIconEl = this.addRibbonIcon('swords', 'Debate Partner', async (evt: MouseEvent) => {
+            const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+            if (activeView) {
+                const editor = activeView.editor;
+                const thesis = this.getThesisText(editor);
+                if (thesis && thesis.trim() !== "") {
+                    await this.handleChallenge(thesis);
+                    return;
+                }
+            }
             await this.activateView();
         });
         ribbonIconEl.addClass('debate-partner-ribbon-class');
@@ -35,8 +44,8 @@ export default class DebatePartnerPlugin extends Plugin {
             id: "challenge-my-thinking",
             name: "Challenge My Thinking",
             editorCallback: async (editor, view) => {
-                const selection = editor.getSelection();
-                await this.handleChallenge(selection);
+                const thesis = this.getThesisText(editor);
+                await this.handleChallenge(thesis);
             }
         });
 
@@ -55,9 +64,46 @@ export default class DebatePartnerPlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
+    getThesisText(editor: any): string {
+        const selection = editor.getSelection();
+        if (selection && selection.trim() !== "") {
+            return selection;
+        }
+
+        const cursor = editor.getCursor();
+        const lineCount = editor.lineCount();
+        const cursorLine = cursor.line;
+        
+        let startLine = cursorLine;
+        let endLine = cursorLine;
+
+        while (startLine > 0) {
+            const line = editor.getLine(startLine - 1).trim();
+            if (line === "" || line.startsWith("#")) {
+                break;
+            }
+            startLine--;
+        }
+
+        while (endLine < lineCount - 1) {
+            const line = editor.getLine(endLine + 1).trim();
+            if (line === "" || line.startsWith("#")) {
+                break;
+            }
+            endLine++;
+        }
+
+        const lines: string[] = [];
+        for (let i = startLine; i <= endLine; i++) {
+            lines.push(editor.getLine(i));
+        }
+
+        return lines.join("\n").trim();
+    }
+
     async handleChallenge(thesisText: string) {
         if (!thesisText || thesisText.trim() === "") {
-            new Notice("No thesis selected! Highlight some text first.");
+            new Notice("No thesis selected! Place your cursor in a paragraph or highlight text first.");
             return;
         }
 
@@ -65,7 +111,8 @@ export default class DebatePartnerPlugin extends Plugin {
         console.log("editor api is grabbing the highlighted text:", thesisText);
 
         const engine = new TfidEngine(this.app);
-        const contradictions = await engine.findContradictions(thesisText, this.settings.contextCount);
+        const activeFile = this.app.workspace.getActiveFile();
+        const contradictions = await engine.findContradictions(thesisText, this.settings.contextCount, activeFile);
 
         console.log("contradictions found:", contradictions.length);
 
